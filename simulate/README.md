@@ -38,6 +38,7 @@ Compare with the quickspecsim command for g=23, z=2.4:
 quickspecsim --infile spec-qso-z2.4-rmag22.62.dat --ab-magnitude g=23 --exptime 900 --model qso --save-plot sim-23-2.4.png
 spec-qso-z2.4-rmag22.62.dat g=23.00 r=22.96 i=23.03
 Median S/N = 0.354, Total (S/N)^2 = 1589.5
+```
 
 ## Redshift Fits
 
