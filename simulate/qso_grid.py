@@ -39,13 +39,22 @@ def main():
     num_cameras = len(bands)
     flux = None
 
+    # Initialize the simulation grid.
+    g_grid = np.linspace(22.0, 23.0, 5)
+    z_grid = np.linspace(1.0, 3.5, 11)
+
+    # Initialize down sampling of the 0.1A simulation grid to 0.5A
     downsampling = 5
     ndown = qsim.wavelengthGrid.size // downsampling
     last = ndown*downsampling
 
+    # Allocate output arrays.
+    num_spec = len(g_grid) * len(z_grid)
+    flux = np.zeros((num_cameras, num_spec, ndown))
+    ivar = np.zeros_like(flux)
+    wave = np.empty_like(flux)
+
     # Loop over g-band magnitudes and redshifts.
-    g_grid = np.linspace(22.0, 23.0, 5)
-    z_grid = np.linspace(1.0, 3.5, 11)
     spec_index = 0
     for g in g_grid:
         print('Simulating g = {:.2f}'.format(g))
@@ -56,14 +65,6 @@ def main():
             results = qsim.simulate(
                 sourceType='qso', sourceSpectrum=input_spectrum,
                 airmass=1.2,expTime=900.,downsampling=downsampling)
-            # Allocate output arrays if necessary.
-            if flux is None:
-                num_spec = len(g_grid) * len(z_grid)
-                num_wlen = len(results.wave)
-                flux = np.zeros((num_cameras, num_spec, num_wlen))
-                ivar = np.zeros_like(flux)
-                wave = np.empty_like(flux)
-                wave[:,:] = results.wave
             # Loop over cameras
             for camera in range(num_cameras):
                 nphotons = (results.nobj)[:,camera]
@@ -76,7 +77,8 @@ def main():
                 throughput = qsim.cameras[camera].sourceCalib[:last:downsampling]
                 mask = mask & (throughput > 0)
                 flux[camera, spec_index, mask] = nphotons[mask] / throughput[mask]
-                ivar[camera, spec_index, mask] = nphotons_var[mask] / throughput[mask]
+                ivar[camera, spec_index, mask] = throughput[mask] / nphotons_var[mask]
+                wave[camera, spec_index] = results.wave
             spec_index += 1
 
     for camera, band in enumerate(bands):
