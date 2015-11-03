@@ -80,7 +80,7 @@ if 1 :
 
 
 
-a1.set_xlabel("gmag")
+a1.set_xlabel("g mag (AB, SDSS filter)")
 a1.set_ylabel(r"$\Delta z$")
 
 if 0 :
