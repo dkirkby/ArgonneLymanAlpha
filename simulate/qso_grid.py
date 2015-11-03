@@ -15,6 +15,15 @@ import astropy.table
 
 
 def main():
+    # parse command-line arguments
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--prefix', type=str, default='',
+        help = 'Optional prefix to use for output filenames.')
+    parser.add_argument('--no-noise', action='store_true',
+        help = 'Do not add random noise to each spectrum.')
+    args = parser.parse_args()
+
     # We require that the SPECSIM_MODEL environment variable is set.
     if 'SPECSIM_MODEL' not in os.environ:
         raise RuntimeError('The environment variable SPECSIM_MODEL must be set.')
@@ -54,12 +63,11 @@ def main():
 
     # Initialize the simulation grid.
     g_grid = np.linspace(22.0, 23.0, 5)
-    z_grid = np.linspace(1.0, 3.5, 11)
+    z_grid = np.linspace(0.5, 3.5, 31)
 
     # Initialize down sampling of the 0.1A simulation grid to 0.5A
     downsampling = 5
     ndown = qsim.wavelengthGrid.size // downsampling
-    last = ndown*downsampling
 
     # Allocate output arrays.
     num_spec = len(g_grid) * len(z_grid)
@@ -77,25 +85,21 @@ def main():
                 .createRescaled(sdssBand='g', abMagnitude=g))
             results = qsim.simulate(
                 sourceType='qso', sourceSpectrum=input_spectrum,
-                airmass=1.2,expTime=900.,downsampling=downsampling)
+                airmass=1.0, expTime=900., downsampling=downsampling)
             # Loop over cameras
             for camera in range(num_cameras):
-                nphotons = (results.nobj)[:,camera]
-                nphotons_var = (nphotons + (results.nsky)[:,camera] +
-                    (results.rdnoise)[:,camera]**2 + (results.dknoise)[:,camera]**2)
-                mask = nphotons_var > 0
-                # Add Poisson noise.
-                nphotons[mask] += np.random.normal(scale=np.sqrt(nphotons_var[mask]))
-                # Apply flux calibration.
-                throughput = qsim.cameras[camera].sourceCalib[:last:downsampling]
-                mask = mask & (throughput > 0)
-                flux[camera, spec_index, mask] = nphotons[mask] / throughput[mask]
-                ivar[camera, spec_index, mask] = throughput[mask] / nphotons_var[mask]
+                snr = (results.snr)[: ,camera]
+                mask = (results.obsflux > 0) & (snr > 0)
+                flux[camera, spec_index, mask] = results[mask].obsflux
+                ivar[camera, spec_index, mask] = (snr[mask] / results[mask].obsflux)**2
+                if not args.no_noise:
+                    flux[camera, spec_index, mask] += np.random.normal(
+                        scale=ivar[camera, spec_index, mask]**-0.5)
                 wave[camera, spec_index] = results.wave
             spec_index += 1
 
     for camera, band in enumerate(bands):
-        output = fitsio.FITS(band + '.fits', 'rw', clobber=True)
+        output = fitsio.FITS(args.prefix + band + '.fits', 'rw', clobber=True)
         output.write(flux[camera])
         output.write(ivar[camera])
         output.write(wave[camera])
