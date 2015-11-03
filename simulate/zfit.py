@@ -11,7 +11,7 @@ import pylab # for debugging
 import math
 
 
-def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,zmax=100.,wave_nsig=2.,ntrack=3,recursive=True) :
+def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.1,zmax=3.,ntrack=3,recursive=True) :
     """
     args :
       wave : list of 1D array of wavelength in A
@@ -20,9 +20,8 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
       template_wave : rest-frame wavelength of template
       template_flux : flux of template
       zstep  : step of redshift scan (linear)
-      zmin   : force min value of redshift scan (default is automatic)
-      zmax   : force max value of redshift scan (default is automatic)
-      wave_nsig : defines the range of wavelength used to fit this line (modified in refinement)
+      zmin   : min value of redshift scan
+      zmax   : max value of redshift scan
       ntrack : number of local minima to track and record (default is 3)
       recursive : internal parameter, one must leave it to True
     
@@ -31,13 +30,11 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
        for ntrack best fit local minima. 
         
     """
-    chris_debug=False
-   
+    
     log=get_logger()
     
     nframes=len(wave)
-    if (chris_debug): print "Nframes = %d"%nframes
-
+    
     ndf=0
     for index in range(nframes) :
         ndf += np.sum(ivar[index]>0)
@@ -185,7 +182,7 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
             zmin=tmp_z-z_nsig*tmp_z_error
             zmax=tmp_z+z_nsig*tmp_z_error
             zstep=(zmax-zmin)/10
-            tmp_results = simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=zstep,zmin=zmin,zmax=zmax,wave_nsig=5.,recursive=False)
+            tmp_results = simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=zstep,zmin=zmin,zmax=zmax,recursive=False)
 
             if rank == 0 :
                 # this is the best
@@ -304,7 +301,7 @@ def main() :
         flux=[b_brick[0].data[spec],r_brick[0].data[spec],z_brick[0].data[spec]]
         ivar=[b_brick[1].data[spec],r_brick[1].data[spec],z_brick[1].data[spec]]
         wave=[b_brick[2].data[spec],r_brick[2].data[spec],z_brick[2].data[spec]]    
-        result = simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.9,zmax=4.5,wave_nsig=2.,ntrack=3,recursive=True)
+        result = simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.3,zmax=4.5,ntrack=3,recursive=True)
         
         
         best_z_array[q]     = result["BEST_Z"]
