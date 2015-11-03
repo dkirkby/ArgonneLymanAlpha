@@ -56,5 +56,10 @@ docs/_build/
 # PyBuilder
 target/
 
-# Data files
+# Binary files
 *.fits
+*.png
+*.pdf
+
+# Notebook outputs
+.ipynb_checkpoints
