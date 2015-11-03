@@ -11,6 +11,7 @@ import argparse
 import specsim
 import numpy as np
 import fitsio
+import astropy.table
 
 
 def main():
@@ -21,8 +22,20 @@ def main():
     # Read the template spectrum.
     template_z = 2.4
     template_file = 'spec-qso-z2.4-rmag22.62.dat'
-    template = specsim.spectrum.SpectralFluxDensity.loadFromTextFile(template_file,
-        wavelengthColumn=0,valuesColumn=1, extrapolatedValue=0.)
+    template_data = astropy.table.Table.read(template_file, format='ascii')
+    wlen, flux = template_data['WAVELENGTH'], template_data['FLUX']
+    # Extrapolate down to 2500A to allow z=3.5
+    wlen_lo = np.linspace(2500., wlen[0] - 0.1, 10)
+    flux_lo = np.empty_like(wlen_lo)
+    flux_lo[:] = np.mean(flux[:10])
+    # Extrapolate up to 34,000A to allow z=0
+    wlen_hi = np.linspace(wlen[-1] + 0.1, 34000., 10)
+    flux_hi = np.empty_like(wlen_hi)
+    flux_hi[:] = np.mean(flux[-10:])
+    # Combine the pieces.
+    wlen = np.hstack([wlen_lo, wlen, wlen_hi])
+    flux = np.hstack([flux_lo, flux, flux_hi])
+    template = specsim.spectrum.SpectralFluxDensity(wlen, flux)
 
     # Create the default atmosphere for the requested sky conditions.
     atmosphere = specsim.atmosphere.Atmosphere(
@@ -60,8 +73,8 @@ def main():
         print('Simulating g = {:.2f}'.format(g))
         for z in z_grid:
             input_spectrum = (template
-                .createRescaled(sdssBand='g', abMagnitude=g)
-                .createRedshifted(newZ=z, oldZ=template_z))
+                .createRedshifted(newZ=z, oldZ=template_z)
+                .createRescaled(sdssBand='g', abMagnitude=g))
             results = qsim.simulate(
                 sourceType='qso', sourceSpectrum=input_spectrum,
                 airmass=1.2,expTime=900.,downsampling=downsampling)
