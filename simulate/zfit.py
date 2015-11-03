@@ -70,36 +70,18 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
     
     previous_chi2=0
     previous_is_at_rank=-1
-    #model=[]
-    #for frame_index in range(nframes) :
-    #    model.append(np.zeros((wave[frame_index].size))) # was it a bug ? (CB)
-    
-
         
-    
     best_z_amplitude=0
     best_z_amplitude_ivar=0
-    
-    
-    # for debugging only
-    #zz=[]
-    #zchi2=[]
-
-    #template_min_wave=template_wave[template_flux!=0][0]+5. # add safety margin because of interpolation
-    #template_max_wave=template_wave[template_flux!=0][-1]-5. # add safety margin because of interpolation
-    #print "template valid wavelength range =",template_min_wave,template_max_wave
-    
+        
     for z in np.linspace(zmin,zmax,num=int((zmax-zmin)/zstep+1)) :
-        
-        
 
-        # reset (wo memory allocation)
         sum_ivar_flux_prof = 0
         sum_ivar_prof2     = 0
         ndf                = 0
         chi2_0             = 0.
         for frame_index in range(nframes) :
-            #model  = np.interp(wave[frame_index],template_wave*(1+z),template_flux)*(wave[frame_index]>template_min_wave*(1+z))*(wave[frame_index]<template_max_wave*(1+z))
+            
             model  = np.interp(wave[frame_index],template_wave*(1+z),template_flux)
             
             sum_ivar_flux_prof += np.sum(ivar[frame_index]*flux[frame_index]*model)
@@ -111,31 +93,23 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
         amp_ivar = sum_ivar_prof2
         ndf -= 1
 
-        if ndf<2000 : # just a safety cut when we don't have enough overlap between template and data 
-            continue
+        
 
         chi2 = chi2_0 - 2*amp* sum_ivar_flux_prof + amp**2*sum_ivar_prof2
         chi2pdf = chi2/ndf
         
-        # my debug
-        #zz.append(z)
-        #zchi2.append(chi2)
-        
         if chi2<np.max(best_chi2s) :
-        #if chi2pdf<np.max(best_chi2pdfs) :
             
             need_insert = True
             
             # first find position depending on delta z and chi2
-            tmp=np.where(abs(z-best_zs)<0.1)[0]
+            tmp=np.where(abs(z-best_zs)<0.05)[0]
             if tmp.size>0 : # there is an existing close redshift we replace this entry
                 i=tmp[0]                 
                 need_insert = False # and we don't have to shift the others
             else :
                 # find position depending on value of chi2
                 i=np.where(chi2<best_chi2s)[0][0] # take the first slot where chi2 smaller                            
-                #i=np.where(chi2pdf<best_chi2pdfs)[0][0] # take the first slot where chi2 smaller             
-                
                 #print "DEBUG INSERT for chi2pdf=%f z=%f ndf=%d i=%d OTHERS z=%s chi2=%s"%(chi2pdf,z,ndf,i,str(best_zs[best_chi2pdfs<very_large_number]),str(best_chi2pdfs[best_chi2s<very_large_number]))
                 best_zs[i+1:]=best_zs[i:-1]
                 best_chi2pdfs[i+1:]=best_chi2pdfs[i:-1]
@@ -144,7 +118,6 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
                 chi2s_at_best_z_plus_zstep[i+1:]=chi2s_at_best_z_plus_zstep[i:-1]
 
         if chi2<best_chi2s[i] :
-        #if chi2pdf<best_chi2pdfs[i] :
             
             best_chi2s[i]=chi2
             best_chi2pdfs[i]=chi2pdf
@@ -159,9 +132,6 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
                 # but this means we may have to change the ranks
                 indices=np.argsort(best_chi2s)
                 if np.sum(np.abs(indices-range(best_chi2s.size)))>0 : # need swap
-                #indices=np.argsort(best_chi2pdfs)
-                #if np.sum(np.abs(indices-range(best_chi2pdfs.size)))>0 : # need swap
-
                     best_chi2s=best_chi2s[indices]
                     best_chi2pdfs=best_chi2pdfs[indices]
                     best_zs=best_zs[indices]
@@ -177,16 +147,6 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
 
         
         previous_chi2=chi2
-        
-    
-    
-    
-    #if recursive :
-        #log.info("first pass best z =%f chi2/ndf=%f, second z=%f dchi2=%f, third z=%f dchi2=%f"%(best_zs[0],best_chi2pdfs[0],best_zs[1],best_chi2s[1]-best_chi2s[0],best_zs[2],best_chi2s[2]-best_chi2s[0]))
-        #pylab.plot(zz,zchi2)
-        #pylab.show()
-        #sys.exit(12)
-    
     
     for rank in range(best_zs.size) :
         # we can use the values about best_chi2 to guess the uncertainty on z with a polynomial fit
@@ -208,7 +168,11 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
         rank_labels = np.array(["BEST","SECOND","THIRD"]) # I know it's a bit ridiculous
         for i in range(rank_labels.size,ntrack) :
             rank_labels=np.append(rank_labels,np.array(["%dTH"%(i+1)])) # even more ridiculous
-        
+        # naming for output
+        labels=np.array(["BEST","SECOND","THIRD"]) # I know it's a bit ridiculous
+        for i in range(labels.size,ntrack) :
+            labels=np.append(labels,np.array(["%dTH"%(i+1)])) # even more ridiculous
+
         for rank in range(best_zs.size) :
             # second loop about minimum
             # where we save things to compute errors
@@ -228,10 +192,6 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
                 best_results=tmp_results
             else :
                 # here we replace the best values
-                labels=np.array(["BEST","SECOND","THIRD"]) # I know it's a bit ridiculous
-                for i in range(labels.size,ntrack) :
-                    labels=np.append(labels,np.array(["%dTH"%(i+1)])) # even more ridiculous
-                
                 label=labels[rank]
                 keys1=best_results.keys()
                 for k1 in keys1 :
@@ -244,7 +204,6 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
         for i,l in zip(range(ntrack),rank_labels) :
             chi2[i]=best_results[l+"_CHI2PDF"]
         indices=np.argsort(chi2)
-        
         if np.sum(np.abs(indices-range(ntrack)))>0 : # need swap
             swapped_best_results={}
             for i in range(ntrack) :
@@ -255,7 +214,7 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.,
                         swapped_best_results[k.replace(old_label,new_label)]=best_results[k]
             best_results=swapped_best_results
 
-        log.info("best z=%f+-%f chi2/ndf=%3.2f snr=%3.1f dchi2=%3.1f for dz=%f"%(best_results["BEST_Z"],best_results["BEST_Z_ERR"],best_results["BEST_CHI2PDF"],best_results["BEST_SNR"],best_results["SECOND_CHI2"]-best_results["BEST_CHI2"],abs(best_results["BEST_Z"]-best_results["SECOND_Z"])))
+        #log.info("best z=%f+-%f chi2/ndf=%3.2f snr=%3.1f dchi2=%3.1f for dz=%f"%(best_results["BEST_Z"],best_results["BEST_Z_ERR"],best_results["BEST_CHI2PDF"],best_results["BEST_SNR"],best_results["SECOND_CHI2"]-best_results["BEST_CHI2"],abs(best_results["BEST_Z"]-best_results["SECOND_Z"])))
         return best_results
     
     res={}
@@ -321,6 +280,7 @@ def main() :
     
     # need to know the wave and flux and z of the templates
     vals=np.loadtxt(args.t).T
+    log.warning("HARDCODED REDSHIFT OF REFERENCE TEMPLATE Z=2.4!!")
     template_wave=vals[0]/(1.+2.4)
     template_flux=vals[1]
     
@@ -356,7 +316,9 @@ def main() :
         
         log.info("SPEC=%d/%d redshift=%f+-%f chi2pdf=%f dchi2=%f"%(q,nqso,best_z_array[q],best_z_error_array[q],best_chi2pdf_array[q],delta_chi2_array[q]))
     
-        save(args.outfile,gmag,z_true,best_z_array,best_z_error_array,best_chi2_array,best_chi2pdf_array,best_snr_array,delta_chi2_array)
+        if q%2==0 : # save intermediate results 
+            save(args.outfile,gmag,z_true,best_z_array,best_z_error_array,best_chi2_array,best_chi2pdf_array,best_snr_array,delta_chi2_array)
+
     save(args.outfile,gmag,z_true,best_z_array,best_z_error_array,best_chi2_array,best_chi2pdf_array,best_snr_array,delta_chi2_array)
 
 if __name__ == '__main__':
