@@ -43,3 +43,8 @@ Output is a binary table in second HDU with keys :
 'BEST_SNR' total signal to noise, this is the amplitude of the template divided by its uncertainty
 'TRUE_Z' true redshift of the simulated QSO spectrum
 'GMAG' g-band magnitude of the input QSO spectrum
+
+Plotting this :
+```
+python plt_zfit.py results.fits
+```
