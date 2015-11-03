@@ -35,16 +35,24 @@ python zfit.py  --b b.fits --r r.fits --z z.fits --t spec-qso-z2.4-rmag22.62.dat
 ```
 
 Output is a binary table in second HDU with keys :
+
 'BEST_Z' best fit redshift 
+
 'BEST_Z_ERR' best fit redshift uncertainty
+
 'BEST_CHI2' best fit chi2
+
 'BEST_CHI2PDF' best fit chi2 per degree of freedom
+
 'DELTA_CHI2' difference of chi2 between best and second best fit for a given minimal redshift separation
+
 'BEST_SNR' total signal to noise, this is the amplitude of the template divided by its uncertainty
+
 'TRUE_Z' true redshift of the simulated QSO spectrum
+
 'GMAG' g-band magnitude of the input QSO spectrum
 
 Plotting this :
 ```
-python plt_zfit.py results.fits
+python plot_zfit.py results.fits
 ```
