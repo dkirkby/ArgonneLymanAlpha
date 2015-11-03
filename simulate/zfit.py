@@ -266,7 +266,7 @@ def main() :
     
     log.warning("HARDCODED TRUE Z AND GMAG")
     g_grid = np.array([ 22.  ,  22.25,  22.5 ,  22.75,  23.  ])
-    z_grid = np.array([ 1.  ,  1.25,  1.5 ,  1.75,  2.  ,  2.25,  2.5 ,  2.75,  3.  , 3.25,  3.5 ])
+    z_grid = np.linspace(0.5,3.5,31)
     gmag = np.tile(g_grid,(z_grid.size,1)).T.ravel()
     z_true = np.tile(z_grid,(g_grid.size,1)).ravel()
     
