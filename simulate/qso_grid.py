@@ -77,6 +77,7 @@ def main():
                 mask = mask & (throughput > 0)
                 flux[camera, spec_index, mask] = nphotons[mask] / throughput[mask]
                 ivar[camera, spec_index, mask] = nphotons_var[mask] / throughput[mask]
+            spec_index += 1
 
     for camera, band in enumerate(bands):
         output = fitsio.FITS(band + '.fits', 'rw', clobber=True)
