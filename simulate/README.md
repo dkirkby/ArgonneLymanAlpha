@@ -38,4 +38,33 @@ Compare with the quickspecsim command for g=23, z=2.4:
 quickspecsim --infile spec-qso-z2.4-rmag22.62.dat --ab-magnitude g=23 --exptime 900 --model qso --save-plot sim-23-2.4.png
 spec-qso-z2.4-rmag22.62.dat g=23.00 r=22.96 i=23.03
 Median S/N = 0.354, Total (S/N)^2 = 1589.5
+
+## Redshift Fits
+
+Fit of the output of  qso_grid.py to get redshifts
+```
+python zfit.py  --b b.fits --r r.fits --z z.fits --t spec-qso-z2.4-rmag22.62.dat --outfile results.fits
+```
+
+Output is a binary table in second HDU with keys :
+
+'BEST_Z' best fit redshift
+
+'BEST_Z_ERR' best fit redshift uncertainty
+
+'BEST_CHI2' best fit chi2
+
+'BEST_CHI2PDF' best fit chi2 per degree of freedom
+
+'DELTA_CHI2' difference of chi2 between best and second best fit for a given minimal redshift separation
+
+'BEST_SNR' total signal to noise, this is the amplitude of the template divided by its uncertainty
+
+'TRUE_Z' true redshift of the simulated QSO spectrum
+
+'GMAG' g-band magnitude of the input QSO spectrum
+
+Plotting this :
+```
+python plot_zfit.py results.fits
 ```
