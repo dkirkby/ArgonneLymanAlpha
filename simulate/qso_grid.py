@@ -128,7 +128,10 @@ def main():
         print('Simulating g = {:.2f}'.format(g))
         for z in z_grid:
             # Pick a random template to use.
-            template_index = np.random.choice(num_templates)
+            #template_index = np.random.choice(num_templates)
+            template_index = int(np.random.uniform()*num_templates)
+
+
             template = templates[template_index]
             # Run the simulation.
             input_spectrum = (template
