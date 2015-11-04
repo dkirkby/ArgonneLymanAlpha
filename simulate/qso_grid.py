@@ -30,11 +30,16 @@ def main():
         help = 'Do not add random noise to each spectrum.')
     parser.add_argument('--write-bricks', action='store_true',
         help = 'Write bricks consistent with datamodel instead of simplied output.')
+    parser.add_argument('-seed', type=int, default=123,
+        help = 'Random number generator seed to use.')
     args = parser.parse_args()
 
     # We require that the SPECSIM_MODEL environment variable is set.
     if 'SPECSIM_MODEL' not in os.environ:
         raise RuntimeError('The environment variable SPECSIM_MODEL must be set.')
+
+    # Set the random seed.
+    generator = np.random.RandomState(args.seed)
 
     # Initialize the simulation grid.
     g_grid = np.linspace(22.0, 23.0, 5)
@@ -109,7 +114,7 @@ def main():
     flux = None
 
     # Initialize down sampling of the 0.1A simulation grid to 0.5A
-    downsampling = 5
+    downsampling = 10
     ndown = qsim.wavelengthGrid.size // downsampling
 
     # Allocate output arrays.
@@ -129,11 +134,9 @@ def main():
     for g in g_grid:
         print('Simulating g = {:.2f}'.format(g))
         for z in z_grid:
-            # Pick a random template to use.
-            #template_index = np.random.choice(num_templates)
-            template_index = int(np.random.uniform()*num_templates)
-
-
+            # Pick a random template to use. We do not use np.random.choice()
+            # for Julien's benefit.
+            template_index = int(generator.uniform()*num_templates)
             template = templates[template_index]
             # Run the simulation.
             input_spectrum = (template
@@ -162,9 +165,14 @@ def main():
             spec_index += 1
 
     for camera, band in enumerate(bands):
-        if args.write_bricks :
-            write_brick.write_brick_file(band=band,brickname='1234p567',NSpectra=num_spec,NWavelength=ndown,Flux=flux[camera],InvVar=ivar[camera],Wavelength=wave[camera],Resolution=wave[camera],TrueZ=true_z[camera],GBand=g_band_mag[camera],RBand=r_band_mag[camera],ZBand=z_band_mag[camera],W1Band=W1_band_mag[camera],W2Band=W2_band_mag[camera])
-        else :
+        if args.write_bricks:
+            write_brick.write_brick_file(
+                band=band,brickname='1234p567',NSpectra=num_spec,NWavelength=ndown,
+                Flux=flux[camera],InvVar=ivar[camera],Wavelength=wave[camera],
+                Resolution=wave[camera],TrueZ=true_z[camera],GBand=g_band_mag[camera],
+                RBand=r_band_mag[camera],ZBand=z_band_mag[camera],
+                W1Band=W1_band_mag[camera],W2Band=W2_band_mag[camera])
+        else:
             output = fitsio.FITS(args.prefix + band + '.fits', 'rw', clobber=True)
             output.write(flux[camera])
             output.write(ivar[camera])
