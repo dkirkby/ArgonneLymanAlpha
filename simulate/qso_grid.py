@@ -28,6 +28,8 @@ def main():
         help = 'Index of template to use (or randomize if not set).')
     parser.add_argument('--no-noise', action='store_true',
         help = 'Do not add random noise to each spectrum.')
+    parser.add_argument('--write-bricks', action='store_true',
+        help = 'Write bricks consistent with datamodel instead of simplied output.')
     args = parser.parse_args()
 
     # We require that the SPECSIM_MODEL environment variable is set.
@@ -160,7 +162,14 @@ def main():
             spec_index += 1
 
     for camera, band in enumerate(bands):
-        write_brick.write_brick_file(band=band,brickname='1234p567',NSpectra=num_spec,NWavelength=ndown,Flux=flux[camera],InvVar=ivar[camera],Wavelength=wave[camera],Resolution=wave[camera],TrueZ=true_z[camera],GBand=g_band_mag[camera],RBand=r_band_mag[camera],ZBand=z_band_mag[camera],W1Band=W1_band_mag[camera],W2Band=W2_band_mag[camera])
+        if args.write_bricks :
+            write_brick.write_brick_file(band=band,brickname='1234p567',NSpectra=num_spec,NWavelength=ndown,Flux=flux[camera],InvVar=ivar[camera],Wavelength=wave[camera],Resolution=wave[camera],TrueZ=true_z[camera],GBand=g_band_mag[camera],RBand=r_band_mag[camera],ZBand=z_band_mag[camera],W1Band=W1_band_mag[camera],W2Band=W2_band_mag[camera])
+        else :
+            output = fitsio.FITS(args.prefix + band + '.fits', 'rw', clobber=True)
+            output.write(flux[camera])
+            output.write(ivar[camera])
+            output.write(wave[camera])
+            output.close()
 
 
 if __name__ == '__main__':
