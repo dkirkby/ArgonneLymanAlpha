@@ -12,6 +12,7 @@ import specsim
 import numpy as np
 import fitsio
 import astropy.table
+import write_brick
 
 
 def main():
@@ -114,6 +115,12 @@ def main():
     flux = np.zeros((num_cameras, num_spec, ndown))
     ivar = np.zeros_like(flux)
     wave = np.empty_like(flux)
+    true_z = np.empty((num_cameras,num_spec))
+    g_band_mag = np.empty_like(true_z)
+    r_band_mag = np.empty_like(true_z)
+    z_band_mag = np.empty_like(true_z)
+    W1_band_mag = np.empty_like(true_z)
+    W2_band_mag = np.empty_like(true_z)
 
     # Loop over g-band magnitudes and redshifts.
     spec_index = 0
@@ -140,14 +147,17 @@ def main():
                     flux[camera, spec_index, mask] += np.random.normal(
                         scale=ivar[camera, spec_index, mask]**-0.5)
                 wave[camera, spec_index] = results.wave
+
+                true_z[camera, spec_index] = z
+                g_band_mag[camera, spec_index] = g
+                r_band_mag[camera, spec_index] = g
+                z_band_mag[camera, spec_index] = g
+                W1_band_mag[camera, spec_index] = g
+                W2_band_mag[camera, spec_index] = g
             spec_index += 1
 
     for camera, band in enumerate(bands):
-        output = fitsio.FITS(args.prefix + band + '.fits', 'rw', clobber=True)
-        output.write(flux[camera])
-        output.write(ivar[camera])
-        output.write(wave[camera])
-        output.close()
+        write_brick.write_brick_file(band=band,brickname='1234p567',NSpectra=num_spec,NWavelength=ndown,Flux=flux[camera],InvVar=ivar[camera],Wavelength=wave[camera],Resolution=wave[camera],TrueZ=true_z[camera],GBand=g_band_mag[camera],RBand=r_band_mag[camera],ZBand=z_band_mag[camera],W1Band=W1_band_mag[camera],W2Band=W2_band_mag[camera])
 
 
 if __name__ == '__main__':
