@@ -33,6 +33,16 @@ To generate spectra without any noise:
 python qso_grid.py --no-noise --prefix no_noise_
 ```
 
+By default, each simulated observation uses a randomly selected template. To use
+the original z=2.4 desimodel template, use:
+```
+python qso_grid.py --template-index -1
+```
+or to simulate a single template from Isabelle's set, specify its index `n = 0-499` with:
+```
+python qso_grid.py --template-index <n>
+```
+
 Compare with the quickspecsim command for g=23, z=2.4:
 ```
 quickspecsim --infile spec-qso-z2.4-rmag22.62.dat --ab-magnitude g=23 --exptime 900 --model qso --save-plot sim-23-2.4.png
