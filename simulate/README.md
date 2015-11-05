@@ -43,6 +43,13 @@ or to simulate a single template from Isabelle's set, specify its index `n = 0-4
 python qso_grid.py --template-index <n>
 ```
 
+To write the output to a pseudo-brick format, use:
+```
+python qso_grid.py --write-bricks
+```
+This format saves truth information about each simulated QSO in HDU4, which would
+normally be the fibermap.
+
 Compare with the quickspecsim command for g=23, z=2.4:
 ```
 quickspecsim --infile spec-qso-z2.4-rmag22.62.dat --ab-magnitude g=23 --exptime 900 --model qso --downsampling 10 --save-plot sim-23-2.4.png

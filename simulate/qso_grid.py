@@ -30,6 +30,8 @@ def main():
         help = 'Do not add random noise to each spectrum.')
     parser.add_argument('--write-bricks', action='store_true',
         help = 'Write bricks consistent with datamodel instead of simplied output.')
+    parser.add_argument('--brickname', type=str, default='1234p567',
+        help = 'Name of brick to write (ignored without --write-bricks).')
     parser.add_argument('-seed', type=int, default=123,
         help = 'Random number generator seed to use.')
     args = parser.parse_args()
@@ -113,21 +115,20 @@ def main():
     num_cameras = len(bands)
     flux = None
 
-    # Initialize down sampling of the 0.1A simulation grid to 0.5A
+    # Initialize down sampling of the 0.1A simulation grid to 1.0A
     downsampling = 10
     ndown = qsim.wavelengthGrid.size // downsampling
 
-    # Allocate output arrays.
+    # Allocate output arrays for data.
     num_spec = len(g_grid) * len(z_grid)
     flux = np.zeros((num_cameras, num_spec, ndown))
     ivar = np.zeros_like(flux)
     wave = np.empty_like(flux)
-    true_z = np.empty((num_cameras,num_spec))
-    g_band_mag = np.empty_like(true_z)
-    r_band_mag = np.empty_like(true_z)
-    z_band_mag = np.empty_like(true_z)
-    W1_band_mag = np.empty_like(true_z)
-    W2_band_mag = np.empty_like(true_z)
+
+    # Allocate output arrays for truth metadata.
+    truth = astropy.table.Table(
+        names=('TRUEZ', 'GBANDT', 'RBANDT', 'ZBANDT', 'W1BANDT', 'W2BANDT'),
+        dtype=('f4', 'f4', 'f4', 'f4', 'f4', 'f4'))
 
     # Loop over g-band magnitudes and redshifts.
     spec_index = 0
@@ -156,22 +157,16 @@ def main():
                         scale=ivar[camera, spec_index, mask]**-0.5)
                 wave[camera, spec_index] = results.wave
 
-                true_z[camera, spec_index] = z
-                g_band_mag[camera, spec_index] = g
-                r_band_mag[camera, spec_index] = g
-                z_band_mag[camera, spec_index] = g
-                W1_band_mag[camera, spec_index] = g
-                W2_band_mag[camera, spec_index] = g
+                truth.add_row(dict(
+                    TRUEZ=z, GBANDT=g, RBANDT=g, ZBANDT=g, W1BANDT=g, W2BANDT=g))
             spec_index += 1
 
     for camera, band in enumerate(bands):
         if args.write_bricks:
             write_brick.write_brick_file(
-                band=band,brickname='1234p567',NSpectra=num_spec,NWavelength=ndown,
-                Flux=flux[camera],InvVar=ivar[camera],Wavelength=wave[camera],
-                Resolution=wave[camera],TrueZ=true_z[camera],GBand=g_band_mag[camera],
-                RBand=r_band_mag[camera],ZBand=z_band_mag[camera],
-                W1Band=W1_band_mag[camera],W2Band=W2_band_mag[camera])
+                band=band, brickname=args.brickname, NSpectra=num_spec, NWavelength=ndown,
+                Flux=flux[camera], InvVar=ivar[camera], Wavelength=wave[camera],
+                Resolution=wave[camera], truth=truth)
         else:
             output = fitsio.FITS(args.prefix + band + '.fits', 'rw', clobber=True)
             output.write(flux[camera])
