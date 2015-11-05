@@ -70,7 +70,8 @@ def main():
     print('Using {} z={:.1f} template(s) from {}.'
         .format(num_templates, template_z, args.template_file))
 
-    # Extend each template so it can be redshifted over the range 0.5 - 3.5.
+    # Extend each template so it can be redshifted over the range 0.5 - 3.5
+    # and also be used to calculate magnitudes.
     wlen_min = wlen[0] * (1 + template_z) / (1 + z_grid[-1])
     wlen_max = max(10000, wlen[-1] * (1 + template_z) / (1 + z_grid[0]))
     # Extrapolate down to wlen_min
@@ -127,8 +128,8 @@ def main():
 
     # Allocate output arrays for truth metadata.
     truth = astropy.table.Table(
-        names=('TRUEZ', 'GBANDT', 'RBANDT', 'ZBANDT', 'W1BANDT', 'W2BANDT'),
-        dtype=('f4', 'f4', 'f4', 'f4', 'f4', 'f4'))
+        names=('TRUEZ', 'GBANDT', 'RBANDT', 'ZBANDT', 'W1BANDT',
+        'W2BANDT', 'TMPID'), dtype=('f4', 'f4', 'f4', 'f4', 'f4', 'f4', 'i4'))
 
     # Loop over g-band magnitudes and redshifts.
     spec_index = 0
@@ -156,9 +157,11 @@ def main():
                     flux[camera, spec_index, mask] += np.random.normal(
                         scale=ivar[camera, spec_index, mask]**-0.5)
                 wave[camera, spec_index] = results.wave
-
-                truth.add_row(dict(
-                    TRUEZ=z, GBANDT=g, RBANDT=g, ZBANDT=g, W1BANDT=g, W2BANDT=g))
+            # Save the truth for this simulated QSO.
+            tmpid = args.template or template_index
+            truth.add_row(dict(
+                TRUEZ=z, GBANDT=g, RBANDT=g, ZBANDT=g, W1BANDT=g,
+                W2BANDT=g, TMPID=tmpid))
             spec_index += 1
 
     for camera, band in enumerate(bands):
