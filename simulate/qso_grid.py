@@ -167,7 +167,7 @@ def main():
     for camera, band in enumerate(bands):
         if args.write_bricks:
             write_brick.write_brick_file(
-                band=band, brickname=args.brickname, NSpectra=num_spec, NWavelength=ndown,
+                band=band, brickname=args.brickname,
                 Flux=flux[camera], InvVar=ivar[camera], Wavelength=wave[camera],
                 Resolution=wave[camera], truth=truth)
         else:

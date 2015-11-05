@@ -1,8 +1,7 @@
-def write_brick_file(band, brickname, NSpectra, NWavelength,
+from astropy.io import fits
+
+def write_brick_file(band, brickname,
                      Flux, InvVar, Wavelength, Resolution, truth):
-
-    from astropy.io import fits
-
     """
     Write brick file
 
@@ -38,6 +37,8 @@ def write_brick_file(band, brickname, NSpectra, NWavelength,
     NAXIS2 	51 	int 	Number of spectra
     """
 
+    NSpectra, NWavelength = Flux.shape
+
     outfile = 'brick-%s-%s.fits' % (band,brickname)
 
     head0 = fits.Header()
@@ -63,8 +64,9 @@ def write_brick_file(band, brickname, NSpectra, NWavelength,
     col4 = fits.Column(name='ZBANDT',format='D',array=truth['ZBANDT'])
     col5 = fits.Column(name='W1BANDT',format='D',array=truth['W1BANDT'])
     col6 = fits.Column(name='W2BANDT',format='D',array=truth['W2BANDT'])
+    col7 = fits.Column(name='TMPID',format='I',array=truth['TMPID'])
 
-    hdu4 = fits.BinTableHDU.from_columns([col1,col2,col3,col4,col5,col6])
+    hdu4 = fits.BinTableHDU.from_columns([col1,col2,col3,col4,col5,col6,col7])
 
     hdulist = fits.HDUList([hdu0,hdu1,hdu2,hdu3,hdu4])
     hdulist.writeto(outfile,clobber=True)
