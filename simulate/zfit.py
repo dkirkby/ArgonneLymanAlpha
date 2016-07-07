@@ -286,8 +286,6 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.1
         log.info("best z=%f+-%f chi2/ndf=%3.2f snr=%3.1f dchi2=%3.1f for dz=%f"%(best_results["BEST_Z"],best_results["BEST_Z_ERR"],best_results["BEST_CHI2PDF"],best_results["BEST_SNR"],best_results["SECOND_CHI2"]-best_results["BEST_CHI2"],abs(best_results["BEST_Z"]-best_results["SECOND_Z"])))
         return best_results
 
-
-    
     
     res={}
     res["BEST_Z"]=best_zs[0]
@@ -298,8 +296,6 @@ def simple_zscan(wave,flux,ivar,template_wave,template_flux,zstep=0.001,zmin=0.1
     res["BEST_AMP"]=best_z_amplitude
     
     return res
-
-
 
 def save(filename,gmag,z_true,best_z_array,best_z_error_array,best_chi2_array,best_chi2pdf_array,best_snr_array,delta_chi2_array) :
     
@@ -340,20 +336,14 @@ def main() :
     
     args = parser.parse_args()
     log=get_logger()
-
     log.info("starting")
-    
-    log.warning("HARDCODED TRUE Z AND GMAG")
-    g_grid = np.array([ 22.  ,  22.25,  22.5 ,  22.75,  23.  ])
-    z_grid = np.linspace(0.5,3.5,31)
-    gmag = np.tile(g_grid,(z_grid.size,1)).T.ravel()
-    z_true = np.tile(z_grid,(g_grid.size,1)).ravel()
-    
+         
     b_brick=pyfits.open(args.b)
     r_brick=pyfits.open(args.r)
     z_brick=pyfits.open(args.z)
-    
-    
+    gmag=b_brick[4].data['GBANDT']
+    z_true=b_brick[4].data['TRUEZ'] 
+   
     # need to know the wave and flux and z of the templates
     vals=np.loadtxt(args.t).T
     log.warning("HARDCODED REDSHIFT OF REFERENCE TEMPLATE Z=2.4!!")
